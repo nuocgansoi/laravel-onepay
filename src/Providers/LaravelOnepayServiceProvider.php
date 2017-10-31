@@ -30,6 +30,8 @@ class LaravelOnepayServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        include __DIR__ . '/../Helpers/functions.php';
+
         $this->mergeConfigFrom(
             __DIR__.'/../config/onepay.php', 'onepay'
         );

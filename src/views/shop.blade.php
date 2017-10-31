@@ -82,12 +82,13 @@
         <div class="content">
             <div class="title m-b-md">
                 User id: {{ Auth::id() }}
-                @yield('message')
             </div>
             <div class="links">
                 @forelse($items as $item)
-                    <a href="{{route('onepay.pay', $item)}}">
-                        Item {{ $item->id }}: {{ $item->{config('onepay.items.price')} }}
+                    <a href="{{route('onepay.pay', [class_basename($item), $item])}}">
+                        {{ class_basename($item) }}
+                        {{ $item->id }}:
+                        {{ getPrice($item) }}
                         {{ config('onepay.currency') }}
                     </a>
                 @empty
