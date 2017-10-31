@@ -17,8 +17,11 @@ return [
     'locale' => env('ONEPAY_LOCALE', 'vn'),
     'return_url' => env('ONEPAY_RETURN_URL', 'http://localhost'),
     'title' => env('ONEPAY_TITLE', 'OnePay Gate'),
-    'items' => [
-        'model' => App\Item::class,
-        'price' => 'price',
-    ],
+    'amount_exchange' => env('ONEPAY_AMOUNT_EXCHANGE', 100),
+    'shop' => [
+        'item' => [
+            'model' => App\Item::class,
+            'price' => 'price',
+        ],
+    ]
 ];

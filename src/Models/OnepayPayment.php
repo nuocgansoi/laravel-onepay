@@ -8,7 +8,7 @@ class OnepayPayment extends Model
 {
     protected $guarded = ['id'];
 
-    public static function makeHashData($amount, $ticketNo, $orderInfo = null)
+    public static function makeHashData($model, $amount, $ticketNo, $orderInfo = null)
     {
         $merchTxnRef = 'ONEPAY_' . round(microtime(true));
         $orderInfo = $orderInfo ?? $merchTxnRef;
@@ -19,7 +19,7 @@ class OnepayPayment extends Model
             'vpc_Command' => config('onepay.command'),
             'vpc_Locale' => config('onepay.locale'),
             'vpc_Merchant' => config('onepay.merchant_id'),
-            'vpc_ReturnURL' => config('onepay.return_url'),
+            'vpc_ReturnURL' => config('onepay.return_url') . '/' . strtolower($model),
             'vpc_Version' => config('onepay.version'),
             'vpc_Amount' => $amount,
             'vpc_MerchTxnRef' => $merchTxnRef,
@@ -35,6 +35,7 @@ class OnepayPayment extends Model
     {
         return static::create([
             'user_id' => $user->id,
+            'item_type' => get_class($item),
             'item_id' => $item->id,
             'access_code' => $hashData['vpc_AccessCode'],
             'currency' => $hashData['vpc_Currency'],

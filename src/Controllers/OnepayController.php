@@ -9,31 +9,34 @@ use NuocGanSoi\LaravelOnepay\Models\OnepayResult;
 
 class OnepayController extends Controller
 {
-    public $itemModel;
-
     use CanCreateOnepayResult;
 
-    public function __construct()
+    public function shop($model)
     {
-        $this->itemModel = app(config('onepay.items.model'));
-    }
+        $shopInstance = getShopInstance($model);
+        if (!$shopInstance) return redirect('/');
 
-    public function shop()
-    {
-        $items = $this->itemModel->all();
+        $items = $shopInstance->all();
+
         return view('onepay::shop', compact('items'));
     }
 
-    public function pay(Request $request, $itemId)
+    public function pay(Request $request, $model, $itemId)
     {
         //  Validate request
-        $item = $this->itemModel->find($itemId);
+        $shopInstance = getShopInstance($model);
+        if (!$shopInstance) return redirect('/');
+
+        $item = $shopInstance->find($itemId);
         if (!$item) return redirect('/');
 
         //  Make hash data
-        $amount = $item->{config('onepay.items.price')} * 100;
+        $price = getPrice($item);
+        if (!$price) return "Check your config price of {$model}!!!";
+
+        $amount = price2Amount($price);
         $ticketNo = $request->ip();
-        $hashData = OnepayPayment::makeHashData($amount, $ticketNo);
+        $hashData = OnepayPayment::makeHashData($model, $amount, $ticketNo, $request->get('order_info'));
 
         //  Encode secure hash
         $stringHashData = '';
@@ -44,7 +47,7 @@ class OnepayController extends Controller
             $stringHashData .= $key . '=' . $value . '&';
         }
         $stringHashData = trim($stringHashData, '&');
-        $secureHash = $this->secureHashEncode($stringHashData);
+        $secureHash = secureHashEncode($stringHashData);
 
         $url .= '&vpc_SecureHash=' . $secureHash;
 
@@ -54,21 +57,16 @@ class OnepayController extends Controller
         return redirect($url);
     }
 
-    public function result(Request $request)
+    public function result(Request $request, $model)
     {
-        $validator = $this->validateOnepayResult($request);
-        if (!$validator['success']) return $validator['message'];
-
         OnepayResult::createFromRequest($request);
 
-        $message = $validator['message'];
-        $items = $this->itemModel->all();
+        $validator = $this->validateOnepayResult($request);
+        $view = $validator['success'] ? 'onepay::success' : 'onepay::failed';
 
-        return view('onepay::result', compact('message', 'items'));
-    }
-
-    private function secureHashEncode($stringHashData)
-    {
-        return strtoupper(hash_hmac('SHA256', $stringHashData, pack('H*', config('onepay.secure_secret'))));
+        return view($view, [
+            'model' => $model,
+            'message' => $validator['message']
+        ]);
     }
 }
