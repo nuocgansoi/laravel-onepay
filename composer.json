@@ -1,0 +1,16 @@
+{
+    "name": "nuocgansoi/laravel-onepay",
+    "description": "Provide a payment by Onepay",
+    "keywords": ["onepay", "laravel", "nuocgansoi"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "nuocgansoi",
+            "email": "nuocgansoi@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0"
+    }
+}
