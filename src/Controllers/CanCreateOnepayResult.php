@@ -24,7 +24,7 @@ trait CanCreateOnepayResult
             }
         }
         $stringHashData = trim($stringHashData, "&");
-        $secureHash = $this->secureHashEncode($stringHashData);
+        $secureHash = secureHashEncode($stringHashData);
         if ($secureHash != $request->get('vpc_SecureHash')) {
             return [
                 'success' => false,
