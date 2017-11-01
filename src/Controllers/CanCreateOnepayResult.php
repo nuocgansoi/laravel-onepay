@@ -10,6 +10,7 @@ namespace NuocGanSoi\LaravelOnepay\Controllers;
 
 
 use Illuminate\Http\Request;
+use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 
 trait CanCreateOnepayResult
 {
@@ -24,11 +25,13 @@ trait CanCreateOnepayResult
             }
         }
         $stringHashData = trim($stringHashData, "&");
-        $secureHash = secureHashEncode($stringHashData);
+        $secureHash = secure_hash_encode($stringHashData);
         if ($secureHash != $request->get('vpc_SecureHash')) {
             return [
                 'success' => false,
                 'message' => 'Invalid Hash',
+                'status' => null,
+                'order_status' => null,
             ];
         }
 
@@ -37,12 +40,21 @@ trait CanCreateOnepayResult
             return [
                 'success' => true,
                 'message' => $this->getResponseDescription($responseCode),
+                'status' => OnepayPayment::STATUS_PAID,
+                'order_status' => config('onepay.order.status.paid'),
             ];
         }
+
+        $onepayStatus = OnepayPayment::getStatusFromResponseCode($responseCode);
+        $orderStatus = $onepayStatus === OnepayPayment::STATUS_REJECTED
+            ? config('onepay.order.status.rejected')
+            : config('onepay.order.status.canceled');
 
         return [
             'success' => false,
             'message' => $this->getResponseDescription($responseCode),
+            'status' => $onepayStatus,
+            'order_status' => $orderStatus,
         ];
     }
 
@@ -97,6 +109,7 @@ trait CanCreateOnepayResult
             default :
                 $result = "Giao dịch thất bại - Failured";
         }
+
         return $result;
     }
 }

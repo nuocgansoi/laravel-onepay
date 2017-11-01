@@ -28,6 +28,7 @@ class CreateOnepayResultsTable extends Migration
             $table->string('version', 2)->nullable();
             $table->string('message', 200)->nullable();
             $table->string('secure_hash', 64);
+            $table->text('response')->nullable();
             $table->timestamps();
         });
     }

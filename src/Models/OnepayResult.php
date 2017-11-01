@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 class OnepayResult extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['response' => 'array'];
 
     public static function createFromRequest(Request $request)
     {
@@ -25,6 +26,7 @@ class OnepayResult extends Model
             'version' => $request->get('vpc_Version'),
             'message' => $request->get('vcp_Message'),
             'secure_hash' => $request->get('vpc_SecureHash'),
+            'response' => $request->all(),
         ]);
     }
 }
