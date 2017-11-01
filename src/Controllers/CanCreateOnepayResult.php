@@ -25,7 +25,7 @@ trait CanCreateOnepayResult
             }
         }
         $stringHashData = trim($stringHashData, "&");
-        $secureHash = secure_hash_encode($stringHashData);
+        $secureHash = onepay_helper()->secure_hash_encode($stringHashData);
         if ($secureHash != $request->get('vpc_SecureHash')) {
             return [
                 'success' => false,

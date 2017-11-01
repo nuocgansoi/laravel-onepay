@@ -16,7 +16,7 @@ class OnepayPayment extends Model
 
     public function getOrder()
     {
-        $orderInstance = get_order_instance();
+        $orderInstance = onepay_helper()->get_order_instance();
 
         return $orderInstance ? $orderInstance->where('id', $this->order_id)->first() : null;
     }
