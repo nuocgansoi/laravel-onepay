@@ -88,7 +88,7 @@
                     <a href="{{route('onepay.pay', [class_basename($item), $item])}}">
                         {{ class_basename($item) }}
                         {{ $item->id }}:
-                        {{ get_price($item) }}
+                        {{ onepay_helper()->get_price($item) }}
                         {{ config('onepay.currency') }}
                     </a>
                 @empty

@@ -12,30 +12,9 @@ class OnepayController extends Controller
 {
     use CanCreateOnepayResult;
 
-    public function __construct()
-    {
-        $orderConfig = [
-            'model',
-            'customer_id',
-            'item_id',
-            'status',
-            'status.attribute',
-            'status.pending',
-            'status.paid',
-            'status.canceled',
-            'status.rejected',
-        ];
-
-        foreach ($orderConfig as $attribute) {
-            if (!config("onepay.order.{$attribute}")) {
-                abort(Response::HTTP_FAILED_DEPENDENCY, 'Check your order config: ' . $attribute);
-            }
-        }
-    }
-
     public function shop($model)
     {
-        $shopInstance = get_shop_instance($model);
+        $shopInstance = onepay_helper()->get_shop_instance($model);
         if (!$shopInstance) return redirect('/');
 
         $items = $shopInstance->all();
@@ -46,17 +25,17 @@ class OnepayController extends Controller
     public function pay(Request $request, $model, $itemId)
     {
         //  Validate request
-        $shopInstance = get_shop_instance($model);
+        $shopInstance = onepay_helper()->get_shop_instance($model);
         if (!$shopInstance) return redirect('/');
 
         $item = $shopInstance->find($itemId);
         if (!$item) return redirect('/');
 
         //  Make hash data
-        $price = get_price($item);
+        $price = onepay_helper()->get_price($item);
         if (!$price) return abort(Response::HTTP_FAILED_DEPENDENCY, "Check your config price of {$model}!!!");
 
-        $amount = price_2_amount($price);
+        $amount = onepay_helper()->price_2_amount($price);
         $ticketNo = $request->ip();
         $hashData = OnepayPayment::makeHashData($model, $amount, $ticketNo, $request->get('order_info'));
 
@@ -69,12 +48,12 @@ class OnepayController extends Controller
             $stringHashData .= $key . '=' . $value . '&';
         }
         $stringHashData = trim($stringHashData, '&');
-        $secureHash = secure_hash_encode($stringHashData);
+        $secureHash = onepay_helper()->secure_hash_encode($stringHashData);
 
         $url .= '&vpc_SecureHash=' . $secureHash;
 
         //  Create order record
-        $order = create_order($request->user(), $item);
+        $order = onepay_helper()->create_order($request->user(), $item);
         if (!$order) return abort(Response::HTTP_FAILED_DEPENDENCY, 'Can not create order, check your order config.');
 
         //  Save payment information to database
