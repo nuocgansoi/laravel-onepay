@@ -6,11 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class OnepayPayment extends Model
 {
+    const STATUS_PENDING = 1;
+    const STATUS_PAID = 2;
+    const STATUS_REJECTED = 3;
+    const STATUS_CANCELED = 4;
+    const STATUS_REFUNDED = 9;
+
     protected $guarded = ['id'];
+
+    public function getOrder()
+    {
+        $orderInstance = get_order_instance();
+
+        return $orderInstance ? $orderInstance->where('id', $this->order_id)->first() : null;
+    }
 
     public static function makeHashData($model, $amount, $ticketNo, $orderInfo = null)
     {
-        $merchTxnRef = 'ONEPAY_' . round(microtime(true));
+        $merchTxnRef = 'ONEPAY_' . $ticketNo . round(microtime(true));
         $orderInfo = $orderInfo ?? $merchTxnRef;
 
         $hashData = [
@@ -31,9 +44,10 @@ class OnepayPayment extends Model
         return $hashData;
     }
 
-    public static function createFromHashData($user, $item, $hashData, $secureHash, $url)
+    public static function createFromHashData($user, $item, $order, $hashData, $secureHash, $url)
     {
         return static::create([
+            'order_id' => $order->id,
             'user_id' => $user->id,
             'item_type' => get_class($item),
             'item_id' => $item->id,
@@ -51,5 +65,21 @@ class OnepayPayment extends Model
             'secure_hash' => $secureHash,
             'url' => $url,
         ]);
+    }
+
+    public static function getStatusFromResponseCode($responseCode)
+    {
+        switch ($responseCode) {
+            case "0" :
+                $status = static::STATUS_PAID;
+                break;
+            case "1" :
+                $status = static::STATUS_REJECTED;
+                break;
+            default :
+                $status = static::STATUS_CANCELED;
+        }
+
+        return $status;
     }
 }
