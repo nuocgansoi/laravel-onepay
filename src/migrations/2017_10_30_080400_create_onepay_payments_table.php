@@ -15,10 +15,10 @@ class CreateOnepayPaymentsTable extends Migration
     {
         Schema::create('onepay_payments', function (Blueprint $table) {
             $table->increments('id');
-            $table->bigInteger('order_id')->nullable();
-            $table->bigInteger('user_id')->nullable();
+            $table->unsignedInteger('order_id')->nullable();
+            $table->unsignedInteger('user_id')->nullable();
             $table->string('item_type')->nullable();
-            $table->bigInteger('item_id')->nullable();
+            $table->unsignedInteger('item_id')->nullable();
             $table->tinyInteger('status')->default(\NuocGanSoi\LaravelOnepay\Models\OnepayPayment::STATUS_PENDING);
             $table->string('access_code', 8);
             $table->string('currency', 3);
@@ -28,7 +28,7 @@ class CreateOnepayPaymentsTable extends Migration
             $table->string('return_url', 64);
             $table->string('version', 2);
             $table->string('amount', 21);
-            $table->string('merch_txn_ref', 40);
+            $table->string('merch_txn_ref', 40)->index();
             $table->string('order_info', 40);
             $table->string('ticket_no', 16);
             $table->string('secure_hash', 64);
