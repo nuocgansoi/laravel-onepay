@@ -20,7 +20,7 @@ class CreateOnepayResultsTable extends Migration
             $table->string('command', 16);
             $table->string('currency_code', 3);
             $table->string('locale', 2);
-            $table->string('merch_txn_ref', 40);
+            $table->string('merch_txn_ref', 40)->index();
             $table->string('merchant', 12);
             $table->string('order_info', 40);
             $table->string('transaction_no', 12);
