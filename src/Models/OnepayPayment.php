@@ -6,17 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class OnepayPayment extends Model
 {
-    const STATUS_PENDING = 1;
-    const STATUS_PAID = 2;
-    const STATUS_REJECTED = 3;
-    const STATUS_CANCELED = 4;
+    const STATUS_WAITING = 1;
+    const STATUS_PENDING = 2;
+    const STATUS_PAID = 3;
+    const STATUS_REJECTED = 4;
+    const STATUS_CANCELED = 5;
     const STATUS_REFUNDED = 9;
 
     protected $guarded = ['id'];
 
-    public function getOrder()
+    public function getOrder($model)
     {
-        $orderInstance = onepay_helper()->get_order_instance();
+        $orderInstance = onepay_helper()->get_order_instance($model);
 
         return $orderInstance ? $orderInstance->where('id', $this->order_id)->first() : null;
     }
