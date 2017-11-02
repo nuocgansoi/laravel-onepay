@@ -17,19 +17,12 @@ class OnepayHelper
             'model',
             'customer_id',
             'item_id',
-            'status',
             'status.attribute',
             'status.pending',
             'status.paid',
             'status.canceled',
             'status.rejected',
         ];
-
-        foreach ($orderConfigs as $orderConfig) {
-            if (!config("onepay.order.{$orderConfig}")) {
-                $this->throwError('order ' . $orderConfig);
-            }
-        }
 
         //  Check shop configs
         $itemConfigs = [
@@ -46,6 +39,12 @@ class OnepayHelper
             foreach ($itemConfigs as $itemConfig) {
                 if (!config("onepay.shop.{$item}.{$itemConfig}")) {
                     $this->throwError("shop {$item} {$itemConfig}");
+                }
+            }
+
+            foreach ($orderConfigs as $orderConfig) {
+                if (!config("onepay.shop.{$item}.order.{$orderConfig}")) {
+                    $this->throwError("shop {$item} order {$orderConfig}");
                 }
             }
         }
@@ -109,12 +108,13 @@ class OnepayHelper
     }
 
     /**
+     * @param $model
      * @return \Illuminate\Foundation\Application|mixed|null
      * @internal param $model
      */
-    public function get_order_instance()
+    public function get_order_instance($model)
     {
-        return app(config("onepay.order.model"));
+        return app(config("onepay.shop.{$model}.order.model"));
     }
 
     /**
@@ -124,13 +124,14 @@ class OnepayHelper
      */
     public function create_order($user, $item)
     {
-        $statusAttr = config('onepay.order.status.attribute');
-        $customerIdAttr = config('onepay.order.customer_id');
-        $itemIdAttr = config('onepay.order.item_id');
-        $orderStatusPending = config('onepay.order.status.pending');
+        $model = strtolower(class_basename($item));
+        $statusAttr = config("onepay.shop.{$model}.order.status.attribute");
+        $customerIdAttr = config("onepay.shop.{$model}.order.customer_id");
+        $itemIdAttr = config("onepay.shop.{$model}.order.item_id");
+        $orderStatusWaiting = config("onepay.shop.{$model}.order.status.waiting");
 
-        return $this->get_order_instance()->create([
-            $statusAttr => $orderStatusPending,
+        return $this->get_order_instance($model)->create([
+            $statusAttr => $orderStatusWaiting,
             $customerIdAttr => $user->id,
             $itemIdAttr => $item->id,
         ]);

@@ -71,14 +71,14 @@ class OnepayController extends Controller
 
         OnepayResult::createFromRequest($request);
 
-        $validator = $this->validateOnepayResult($request);
+        $validator = $this->validateOnepayResult($request, $model);
         if ($validator['status']) {
             $onepayPayment->update([
                 'status' => $validator['status'],
             ]);
         }
 
-        $order = $onepayPayment->getOrder();
+        $order = $onepayPayment->getOrder($model);
         if ($order && $orderStatus = $validator['order_status']) {
             $order->update([
                 'status' => $orderStatus,

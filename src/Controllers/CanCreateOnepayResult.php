@@ -14,7 +14,7 @@ use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 
 trait CanCreateOnepayResult
 {
-    private function validateOnepayResult(Request $request)
+    private function validateOnepayResult(Request $request, $model)
     {
         $response = $request->except(['vpc_SecureHash']);
         ksort($response);
@@ -41,14 +41,14 @@ trait CanCreateOnepayResult
                 'success' => true,
                 'message' => $this->getResponseDescription($responseCode),
                 'status' => OnepayPayment::STATUS_PAID,
-                'order_status' => config('onepay.order.status.paid'),
+                'order_status' => config("onepay.shop.{$model}.order.status.paid"),
             ];
         }
 
         $onepayStatus = OnepayPayment::getStatusFromResponseCode($responseCode);
         $orderStatus = $onepayStatus === OnepayPayment::STATUS_REJECTED
-            ? config('onepay.order.status.rejected')
-            : config('onepay.order.status.canceled');
+            ? config("onepay.shop.{$model}.order.status.rejected")
+            : config("onepay.shop.{$model}.order.status.canceled");
 
         return [
             'success' => false,
