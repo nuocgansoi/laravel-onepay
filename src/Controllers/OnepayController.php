@@ -47,6 +47,7 @@ class OnepayController extends Controller
             return view('onepay::rejected', [
                 'message' => $orderCreator['message'],
                 'rejectedCode' => $orderCreator['rejected_code'],
+                'order' => $orderCreator['order'],
             ]);
         }
 

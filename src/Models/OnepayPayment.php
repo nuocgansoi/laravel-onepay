@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class OnepayPayment extends Model
 {
-    const STATUS_WAITING = 1;
-    const STATUS_PENDING = 2;
+    const STATUS_PENDING = 1;
+    const STATUS_PROCESSING = 2;
     const STATUS_PAID = 3;
     const STATUS_REJECTED = 4;
     const STATUS_CANCELED = 5;
