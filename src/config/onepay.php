@@ -19,22 +19,22 @@ return [
     'title' => env('ONEPAY_TITLE', 'OnePay Gate'),
     'amount_exchange' => env('ONEPAY_AMOUNT_EXCHANGE', 100),
     'shop' => [
-        //'book' => [
-        //    'model' => App\Book::class,
-        //    'price' => 'price',
-        //    'order' => [
-        //        'model' => App\BookOrder::class,
-        //        'customer_id' => 'user_id',
-        //        'item_id' => 'book_id',
-        //        'status' => [
-        //            'attribute' => 'status',
-        //            'waiting' => App\BookOrder::STATUS_WAITING,
-        //            'pending' => App\BookOrder::STATUS_PENDING,
-        //            'paid' => App\BookOrder::STATUS_PAID,
-        //            'canceled' => App\BookOrder::STATUS_CANCELED,
-        //            'rejected' => App\BookOrder::STATUS_REJECTED,
-        //        ],
-        //    ],
-        //],
+        'book' => [
+            'model' => App\Book::class,
+            'price' => 'price',
+            'order' => [
+                'model' => App\BookOrder::class,
+                'customer_id' => 'user_id',
+                'item_id' => 'book_id',
+                'status' => [
+                    'attribute' => 'status',
+                    'waiting' => App\BookOrder::STATUS_WAITING,
+                    'pending' => App\BookOrder::STATUS_PENDING,
+                    'paid' => App\BookOrder::STATUS_PAID,
+                    'canceled' => App\BookOrder::STATUS_CANCELED,
+                    'rejected' => App\BookOrder::STATUS_REJECTED,
+                ],
+            ],
+        ],
     ],
 ];

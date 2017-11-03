@@ -10,7 +10,7 @@ use NuocGanSoi\LaravelOnepay\Models\OnepayResult;
 
 class OnepayController extends Controller
 {
-    use CanCreateOnepayResult;
+    use CanPayItem, CanCreateOnepayResult;
 
     public function shop($model)
     {
@@ -24,40 +24,33 @@ class OnepayController extends Controller
 
     public function pay(Request $request, $model, $itemId)
     {
-        //  Validate request
-        $shopInstance = onepay_helper()->get_shop_instance($model);
-        if (!$shopInstance) return redirect('/');
+        $validator = $this->validatePayRequest($model, $itemId);
+        if (!$validator['success']) {
+            return redirect($validator['redirect']);
+        }
 
-        $item = $shopInstance->find($itemId);
-        if (!$item) return redirect('/');
-
-        //  Make hash data
+        $item = $validator['item'];
         $price = onepay_helper()->get_price($item);
         if (!$price) return abort(Response::HTTP_FAILED_DEPENDENCY, "Check your config price of {$model}!!!");
 
+        //  Make hash data
         $amount = onepay_helper()->price_2_amount($price);
         $ticketNo = $request->ip();
         $hashData = OnepayPayment::makeHashData($model, $amount, $ticketNo, $request->get('order_info'));
 
-        //  Encode secure hash
-        $stringHashData = '';
-        $url = config('onepay.url');
-        $url .= '?Title=' . urlencode(config('onepay.title'));
-        foreach ($hashData as $key => $value) {
-            $url .= '&' . urlencode($key) . '=' . urlencode($value);
-            $stringHashData .= $key . '=' . $value . '&';
-        }
-        $stringHashData = trim($stringHashData, '&');
-        $secureHash = onepay_helper()->secure_hash_encode($stringHashData);
-
-        $url .= '&vpc_SecureHash=' . $secureHash;
+        list($url, $secureHash) = $this->makePayUrl($hashData);
 
         //  Create order record
-        $order = onepay_helper()->create_order($request->user(), $item);
-        if (!$order) return abort(Response::HTTP_FAILED_DEPENDENCY, 'Can not create order, check your order config.');
+        $orderCreator = onepay_helper()->create_or_update_order($request->user(), $item);
+        if (!$orderCreator['success']) {
+            return view('onepay::rejected', [
+                'message' => $orderCreator['message'],
+                'rejectedCode' => $orderCreator['rejected_code'],
+            ]);
+        }
 
         //  Save payment information to database
-        OnepayPayment::createFromHashData($request->user(), $item, $order, $hashData, $secureHash, $url);
+        OnepayPayment::createFromHashData($request->user(), $item, $orderCreator['order'], $hashData, $secureHash, $url);
 
         return redirect($url);
     }
