@@ -14,7 +14,7 @@ use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 
 trait CanCreateOnepayResult
 {
-    private function validateOnepayResult(Request $request, $model)
+    private function validateResultRequest(Request $request, $model)
     {
         $response = $request->except(['vpc_SecureHash']);
         ksort($response);

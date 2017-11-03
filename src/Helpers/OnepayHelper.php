@@ -10,6 +10,9 @@ namespace NuocGanSoi\LaravelOnepay\Helpers;
 
 class OnepayHelper
 {
+    const REJECTED_CODE_PROCESSING_ORDER = 1;
+    const REJECTED_CODE_PENDING_ORDER = 2;
+
     public function __construct()
     {
         //  Check order configs
@@ -19,6 +22,7 @@ class OnepayHelper
             'item_id',
             'status.attribute',
             'status.pending',
+            'status.processing',
             'status.paid',
             'status.canceled',
             'status.rejected',
@@ -122,19 +126,50 @@ class OnepayHelper
      * @param $item
      * @return mixed
      */
-    public function create_order($user, $item)
+    public function create_or_update_order($user, $item)
     {
         $model = strtolower(class_basename($item));
         $statusAttr = config("onepay.shop.{$model}.order.status.attribute");
         $customerIdAttr = config("onepay.shop.{$model}.order.customer_id");
         $itemIdAttr = config("onepay.shop.{$model}.order.item_id");
-        $orderStatusWaiting = config("onepay.shop.{$model}.order.status.waiting");
+        $statusPending = config("onepay.shop.{$model}.order.status.pending");
+        $statusProcessing = config("onepay.shop.{$model}.order.status.processing");
 
-        return $this->get_order_instance($model)->create([
-            $statusAttr => $orderStatusWaiting,
+        $orderInstance = $this->get_order_instance($model);
+        $orders = $orderInstance->where($customerIdAttr, $user->id)
+            ->where($itemIdAttr, $item->id)
+            ->whereIn($statusAttr, [$statusProcessing, $statusPending])
+            ->get();
+        foreach ($orders as $order) {
+            switch ($order->{$statusAttr}) {
+                case $statusPending:
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn đã có 1 đơn hàng đang chờ duyệt',
+                        'rejected_code' => static::REJECTED_CODE_PENDING_ORDER,
+                        'order' => $order,
+                    ];
+                case $statusProcessing:
+                    return [
+                        'success' => false,
+                        'message' => 'Bạn đã có 1 đơn hàng đang được xử lý',
+                        'rejected_code' => static::REJECTED_CODE_PROCESSING_ORDER,
+                        'order' => $order,
+                    ];
+                default:
+                    break;
+            }
+        }
+
+        $order = $this->get_order_instance($model)->create([
+            $statusAttr => $statusPending,
             $customerIdAttr => $user->id,
             $itemIdAttr => $item->id,
         ]);
-    }
 
+        return [
+            'success' => true,
+            'order' => $order,
+        ];
+    }
 }
