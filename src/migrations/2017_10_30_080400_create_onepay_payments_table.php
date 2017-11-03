@@ -16,6 +16,7 @@ class CreateOnepayPaymentsTable extends Migration
         Schema::create('onepay_payments', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('order_id')->nullable();
+            $table->string('order_type')->nullable();
             $table->unsignedInteger('user_id')->nullable();
             $table->string('item_type')->nullable();
             $table->unsignedInteger('item_id')->nullable();

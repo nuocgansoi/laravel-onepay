@@ -43,7 +43,7 @@ trait CanPayItem
     private function makePayUrl($hashData)
     {
         $stringHashData = '';
-        $url = config('onepay.url');
+        $url = config('onepay.do_url');
         $url .= '?Title=' . urlencode(config('onepay.title'));
         foreach ($hashData as $key => $value) {
             $url .= '&' . urlencode($key) . '=' . urlencode($value);

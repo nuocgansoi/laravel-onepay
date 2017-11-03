@@ -15,11 +15,18 @@ class OnepayPayment extends Model
 
     protected $guarded = ['id'];
 
-    public function getOrder($model)
+    public function getOrder()
     {
-        $orderInstance = onepay_helper()->get_order_instance($model);
+        $orderInstance = app($this->order_type);
 
         return $orderInstance ? $orderInstance->where('id', $this->order_id)->first() : null;
+    }
+
+    public function getItem()
+    {
+        $itemInstance = app($this->item_type);
+
+        return $itemInstance ? $itemInstance->where('id', $this->item_id)->first() : null;
     }
 
     public static function makeHashData($model, $amount, $ticketNo, $orderInfo = null)
@@ -48,6 +55,7 @@ class OnepayPayment extends Model
     public static function createFromHashData($user, $item, $order, $hashData, $secureHash, $url)
     {
         return static::create([
+            'order_type' => get_class($order),
             'order_id' => $order->id,
             'user_id' => $user->id,
             'item_type' => get_class($item),

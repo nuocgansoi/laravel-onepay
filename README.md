@@ -7,16 +7,17 @@
 ## Add to .env:
 ```env
 ONEPAY_VERSION=2
-ONEPAY_URL_PAYMENT=https://mtf.onepay.vn/onecomm-pay/vpc.op
 ONEPAY_MERCHANT_ID=ONEPAY
 ONEPAY_ACCESS_CODE=D67342C2
 ONEPAY_SECURE_SECRET=A3EFDFABA8653DF2342E8DAC29B51AF0
 ONEPAY_COMMAND=pay
 ONEPAY_CURRENCY=VND
 ONEPAY_LOCALE=vn
-ONEPAY_RETURN_URL=http://localhost/onepay/result
 ONEPAY_TITLE="OnePay Gate"
 ONEPAY_AMOUNT_EXCHANGE=100
+ONEPAY_DO_URL=https://mtf.onepay.vn/onecomm-pay/vpc.op
+ONEPAY_RETURN_URL=http://onepay.dev/onepay/result
+ONEPAY_IPN_URL=http://onepay.dev/onepay/ipn
 ```
 
 ## config/onepay.php:

@@ -5,12 +5,13 @@ namespace NuocGanSoi\LaravelOnepay\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use NuocGanSoi\LaravelOnepay\Models\OnepayIpn;
 use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 use NuocGanSoi\LaravelOnepay\Models\OnepayResult;
 
 class OnepayController extends Controller
 {
-    use CanPayItem, CanCreateOnepayResult;
+    use CanPayItem, CanCreateOnepayResult, HasOnepayIpn;
 
     public function shop($model)
     {
@@ -64,14 +65,14 @@ class OnepayController extends Controller
 
         OnepayResult::createFromRequest($request);
 
-        $validator = $this->validateOnepayResult($request, $model);
+        $validator = $this->validateResultRequest($request, $model);
         if ($validator['status']) {
             $onepayPayment->update([
                 'status' => $validator['status'],
             ]);
         }
 
-        $order = $onepayPayment->getOrder($model);
+        $order = $onepayPayment->getOrder();
         if ($order && $orderStatus = $validator['order_status']) {
             $order->update([
                 'status' => $orderStatus,
@@ -85,5 +86,34 @@ class OnepayController extends Controller
             'message' => $validator['message'],
             'response' => $request->all(),
         ]);
+    }
+
+    public function ipn(Request $request)
+    {
+        //  Validate request
+        /** @var OnepayPayment $onepayPayment */
+        $onepayPayment = OnepayPayment::where('merch_txn_ref', $request->get('vpc_MerchTxnRef'))->first();
+        if (!$onepayPayment) return response('Invalid payment, check vpc_MerchTxnRef', Response::HTTP_BAD_REQUEST);
+
+        $item = $onepayPayment->getItem();
+        if (!$item) return abort(Response::HTTP_BAD_REQUEST, 'Item is null, check onepayPayment data');
+
+        $validator = $this->validateIpnRequest($request, $item);
+        if ($validator['status']) {
+            $onepayPayment->update([
+                'status' => $validator['status'],
+            ]);
+        }
+
+        $availableOnepayIpn = OnepayIpn::where('merch_txn_ref', $request->get('vpc_MerchTxnRef'))->first();
+        if (!$availableOnepayIpn) {
+            $this->ipnUpdateOrderStatus($onepayPayment->getOrder(), $validator['order_status']);
+        }
+        OnepayIpn::createFromRequest($request);
+
+        $responseCode = $validator['order_status'] ? 1 : 0;
+        $desc = $validator['success'] ? 'success' : 'fail';
+
+        return "responsecode={$responseCode}&desc=confirm-{$desc}";
     }
 }
