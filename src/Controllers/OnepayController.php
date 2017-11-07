@@ -5,6 +5,8 @@ namespace NuocGanSoi\LaravelOnepay\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use NuocGanSoi\LaravelOnepay\Events\ReceivedOnepayIpnEvent;
+use NuocGanSoi\LaravelOnepay\Events\ReceivedOnepayResultEvent;
 use NuocGanSoi\LaravelOnepay\Models\OnepayIpn;
 use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 use NuocGanSoi\LaravelOnepay\Models\OnepayResult;
@@ -81,6 +83,7 @@ class OnepayController extends Controller
                 'status' => $orderStatus,
             ]);
         }
+        event(new ReceivedOnepayResultEvent($request->all()));
         OnepayResult::createFromRequest($request);
 
         $view = $validator['success'] ? 'onepay::success' : 'onepay::failed';
@@ -89,6 +92,7 @@ class OnepayController extends Controller
             'model' => $model,
             'message' => $validator['message'],
             'response' => $request->all(),
+            'item' => $onepayPayment->getItem(),
         ]);
     }
 
@@ -115,6 +119,7 @@ class OnepayController extends Controller
         if (!$availableOnepayIpn) {
             $this->ipnUpdateOrderStatus($onepayPayment->getOrder(), $validator['order_status']);
         }
+        event(new ReceivedOnepayIpnEvent($request->all()));
         OnepayIpn::createFromRequest($request);
 
         $responseCode = $validator['order_status'] ? 1 : 0;
