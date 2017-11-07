@@ -14,19 +14,15 @@ use NuocGanSoi\LaravelOnepay\Models\OnepayPayment;
 
 trait HasOnepayIpn
 {
-    private function ipnUpdateOrderStatus($order, $orderStatus)
+    private function validateIpnRequest(Request $request)
     {
-        if ($order && $orderStatus) {
-            $order->update([
-                'status' => $orderStatus,
-            ]);
-        }
+        return $this->validateResultRequest($request);
     }
 
-    private function validateIpnRequest(Request $request, $item)
+    private function parseIpn(Request $request, $item)
     {
         $model = strtolower(class_basename($item));
 
-        return $this->validateResultRequest($request, $model);
+        return $this->parseResult($request, $model);
     }
 }

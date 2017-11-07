@@ -69,28 +69,34 @@ class OnepayController extends Controller
         if (!$onepayPayment) return response('Invalid payment, check vpc_MerchTxnRef', Response::HTTP_BAD_REQUEST);
 
 
-        $validator = $this->validateResultRequest($request, $model);
-        if ($validator['status']) {
-            $onepayPayment->update([
-                'status' => $validator['status'],
+        $validator = $this->validateResultRequest($request);
+        if (!$validator['success']) {
+            return view('onepay::reject', [
+                'rejectedCode' => -1,
+                'message' => $validator['message'],
             ]);
         }
 
+        $response = $this->parseResult($request, $model);
+        $onepayPayment->update([
+            'status' => $response['status'],
+        ]);
+
         $availableOnepayResult = OnepayResult::where('merch_txn_ref', $merchTxnRef)->first();
         $order = $onepayPayment->getOrder();
-        if (!$availableOnepayResult && $order && $orderStatus = $validator['order_status']) {
+        if (!$availableOnepayResult && $order) {
             $order->update([
-                'status' => $orderStatus,
+                'status' => $response['order_status'],
             ]);
         }
         event(new ReceivedOnepayResultEvent($request->all()));
         OnepayResult::createFromRequest($request);
 
-        $view = $validator['success'] ? 'onepay::success' : 'onepay::failed';
+        $view = $response['success'] ? 'onepay::success' : 'onepay::failed';
 
         return view($view, [
             'model' => $model,
-            'message' => $validator['message'],
+            'message' => $response['message'],
             'response' => $request->all(),
             'item' => $onepayPayment->getItem(),
         ]);
@@ -108,22 +114,29 @@ class OnepayController extends Controller
         $item = $onepayPayment->getItem();
         if (!$item) return abort(Response::HTTP_BAD_REQUEST, 'Item is null, check onepayPayment data');
 
-        $validator = $this->validateIpnRequest($request, $item);
-        if ($validator['status']) {
-            $onepayPayment->update([
-                'status' => $validator['status'],
+        $validator = $this->validateIpnRequest($request);
+        if (!$validator['success']) {
+            return view('onepay::reject', [
+                'rejectedCode' => -1,
+                'message' => $validator['message'],
             ]);
         }
 
+        $response = $this->parseIpn($request, $item);
+        $onepayPayment->update([
+            'status' => $response['status'],
+        ]);
+
         $availableOnepayIpn = OnepayIpn::where('merch_txn_ref', $merchTxnRef)->first();
-        if (!$availableOnepayIpn) {
-            $this->ipnUpdateOrderStatus($onepayPayment->getOrder(), $validator['order_status']);
+        $order = $onepayPayment->getOrder();
+        if (!$availableOnepayIpn && $order) {
+            $order->update(['status' => $response['order_status']]);
         }
         event(new ReceivedOnepayIpnEvent($request->all()));
         OnepayIpn::createFromRequest($request);
 
-        $responseCode = $validator['order_status'] ? 1 : 0;
-        $desc = $validator['success'] ? 'success' : 'fail';
+        $responseCode = $response['order_status'] ? 1 : 0;
+        $desc = $response['success'] ? 'success' : 'fail';
 
         return "responsecode={$responseCode}&desc=confirm-{$desc}";
     }
