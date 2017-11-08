@@ -74,6 +74,7 @@ class OnepayController extends Controller
             return view('onepay::reject', [
                 'rejectedCode' => -1,
                 'message' => $validator['message'],
+                'order' => $onepayPayment->getOrder(),
             ]);
         }
 
@@ -99,6 +100,7 @@ class OnepayController extends Controller
             'message' => $response['message'],
             'response' => $request->all(),
             'item' => $onepayPayment->getItem(),
+            'order' => $onepayPayment->getOrder(),
         ]);
     }
 
@@ -119,6 +121,7 @@ class OnepayController extends Controller
             return view('onepay::reject', [
                 'rejectedCode' => -1,
                 'message' => $validator['message'],
+                'order' => $onepayPayment->getOrder(),
             ]);
         }
 
